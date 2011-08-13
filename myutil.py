@@ -29,9 +29,11 @@ def stringToFile(content, filepath, fileEncoding='utf-8'):
     a_file.write(content)
 
 def getWebFileHandle(url):
+  '''Return a handle of url for process'''
   return urlopen(url)
 
 def getContentByURL(url):
+  ''' Get content from given url'''
   content = None
   with urlopen(url) as conn:
     content = conn.read()
@@ -136,19 +138,25 @@ class FeedParser:
   def __init__(self):
     self.tree = None
   
-  def parse(self, fileHandle):
-    with fileHandle as rsc:
-      self.tree = etree.parse(rsc)
+  def parse(self, file=None, url=None):
+    source = ''
+    try:
+      if file:
+        with open(file) as res:
+          source = file
+          self.tree = etree.parse(res)
+      else:
+        with getWebFileHandle(url) as res:
+          source = url
+          self.tree = etree.parse(res)
+    except(etree.ParseError):
+      print('[FATAL] Parse {} Error'.format(source))
+      self.tree = EmptyObject()
     return self.tree
 
-  def parse(self, file=None, url=None):
-    if file:
-      with open(file) as res:
-        self.tree = etree.parse(res)
-    else:
-      with getWebFileHandle(url) as res:
-        self.tree = etree.parse(res)
-    return self.tree
+  def isAvailable(self):
+    '''True if instance is not a EmptyObejct'''
+    return self.tree != EmptyObject()
       
   def findall(self, query):
     return self.tree.findall(query)
@@ -162,6 +170,13 @@ class CacheIsEmptyError(Exception):
 
   def __str__(self):
     return repr(self.value)
+
+class EmptyObject(object):
+  _instance = None
+  def __new__(cls, *args, **kwargs):
+    if not cls._instance:
+      cls._instance = super(EmptyObject, cls).__new__(cls, *args, **kwargs)
+    return cls._instance 
 
 import unittest
 class Test(unittest.TestCase):

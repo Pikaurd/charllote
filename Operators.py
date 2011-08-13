@@ -3,7 +3,7 @@
 
 ###
 # Created  :Tue Jul 12 11:27:29 UTC 2011
-# Modified :Sun Jul 17 11:45:31 UTC 2011
+# Modified :Sun Aug 13 14:22:31 UTC 2011
 ###
 
 import datetime
@@ -26,19 +26,23 @@ from myutil import listPrint
 from myutil import listUnique
 from myutil import listSub
 from myutil import CacheIsEmptyError
+from myutil import EmptyObject
 
 class FeedReader:
   def __init__(self, feedRes):
-    self.isSkip = False
+    self.isSkip = True
     self.feedParser = FeedParser()
     self.feedRes = feedRes
-    url = feedRes.url
+    self.initFeedParser(feedRes.url)
+
+  def initFeedParser(self, url):
     if url.startswith('http'):
       self.feedParser.parse(url=url)
     else:
       self.feedParser.parse(file=url)
-    self._fillFeedResPubDate()
-
+    if self.feedParser.isAvailable():
+      self._fillFeedResPubDate()
+    
   def getFeedItems(self, isFetchExist=True):
     items = []
     if self.isSkip and not isFetchExist:
@@ -69,27 +73,21 @@ class FeedReader:
       else:
         feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) and not Cache.isExist(feedItem)
     return feedIsNew
-    
 
-  def fillFeedResPubDate(self):
-    print('descreapted')
-    return self._fillFeedResPubDate()
-  
   def _fillFeedResPubDate(self):
-    # also will compare pubDate and write new pubDate to DB
-    pubDateNode = self.feedParser.find('.//lastBuildDate')
-    if pubDateNode == None:
-      pubDateNode = self.feedParser.find('.//pubDate')
-    newPubDate = str2Time(pubDateNode.text)
+    newPubDate = str2Time(self._getPubDate())
     #print('old: {}\tnew: {}'.format(self.feedRes.pubDate, newPubDate))
-    foo = self.feedRes.isUpdated(newPubDate)
     if self.feedRes.isUpdated(newPubDate):
       self.feedRes.pubDate = newPubDate
       ResourceOperator().addFeedResUpdateTime(self.feedRes)
-    else:
-      self.isSkip = True
+      self.isSkip = False
     #  print('skip feed: {}'.format(self.feedRes.url))
-    return foo
+
+  def _getPubDate(self):
+    pubDateNode = self.feedParser.find('.//lastBuildDate')
+    if pubDateNode == None:
+      pubDateNode = self.feedParser.find('.//pubDate')
+    return pubDateNode.text 
     
   def _isUpdated(self, feedResId):
     return false

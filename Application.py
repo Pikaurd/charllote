@@ -17,7 +17,7 @@ from Operators import FeedReader
 
 
 class Application:
-  __version__ = (0, 1, 1)
+  __version__ = (0, 1, 2)
   def __init__(self):
     self.resOper = ResourceOperator()
     self.feedFilter = FeedFilter()
@@ -101,6 +101,9 @@ if __name__ == '__main__':
   if len(sys.argv) > 1:
     if sys.argv[1] == "--init":
       mode = "init"
+    elif sys.argv[1] == "--version":
+      print(Application.__version__)
+      sys.exit(0)
     else:
       mode = 'skip'
   Application().run(mode)

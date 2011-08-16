@@ -18,15 +18,15 @@ from Entities import FeedRes
 from Entities import FeedResUpdateTime
 from Entities import FilterReason
 
-from myutil import FeedParser
-from myutil import queryStmt
-from myutil import time2Str
-from myutil import str2Time
-from myutil import listPrint
-from myutil import listUnique
-from myutil import listSub
-from myutil import CacheIsEmptyError
-from myutil import EmptyObject
+from pikaurdlib.util import FeedParser
+from pikaurdlib.util import queryStmt
+from pikaurdlib.util import time2Str
+from pikaurdlib.util import str2Time
+from pikaurdlib.util import listPrint
+from pikaurdlib.util import listUnique
+from pikaurdlib.util import listSub
+from pikaurdlib.util import CacheIsEmptyError
+from pikaurdlib.util import EmptyObject
 
 class FeedReader:
   def __init__(self, feedRes):

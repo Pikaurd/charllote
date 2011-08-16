@@ -12,7 +12,7 @@ import unittest
 from Operators import FeedReader
 from Operators import FeedFilter
 from Operators import ResourceOperator
-from myutil import *
+from pikaurdlib.util import *
 
 from Entities import Cache
 from Entities import FeedRes

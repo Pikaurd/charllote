@@ -7,25 +7,38 @@
 ###
 
 import os
+import sys
 
-from myutil import listSub
-from myutil import listPrint
-from myutil import listUnique
+from pikaurdlib.util import listSub
+from pikaurdlib.util import listPrint
+from pikaurdlib.util import listUnique
 from Operators import ResourceOperator
 from Operators import FeedFilter
 from Operators import FeedReader
 
 
 class Application:
-  __version__ = (0, 1, 2)
+  __version__ = (0, 1, 3)
   def __init__(self):
     self.resOper = ResourceOperator()
     self.feedFilter = FeedFilter()
     self._initCache()
+    self.results = None
 
   def _initCache(self):
     self.resOper.getFeedResUpdateTime()
     self.resOper.fillCache()
+
+  def openLink(self, index):
+    openCmd = 'open'
+    platform = sys.platform
+    if platform == 'linux2':
+      openCmd = 'xdg-open'
+    elif platform == 'win32':
+      openCmd = 'start'
+    for i in [int(e) for e in index.split(' ')]:
+      os.system('open {!r}'.format(self.results[0][i].link))
+
 
   def readCommand(self, results):
     def getArg(x):
@@ -34,7 +47,7 @@ class Application:
       cmd = input()
       while (cmd != 'exit'):
         if cmd.startswith('c'):
-          os.system('open {!r}'.format(results[0][getArg(cmd)].link))
+          self.openLink(cmd[2:])
         elif cmd.startswith('d'):
           print('Not implement')
         elif cmd == 'add filter':
@@ -43,6 +56,10 @@ class Application:
           self._showResult(results[1])
         elif cmd == 'show':
           self._showResult(results[0])
+        elif cmd == 'fetch':
+          self.fetchAndPrint()
+        else:
+          print('unregconezed')
         cmd = input()
     except EOFError:
       print('Bye~')
@@ -71,7 +88,7 @@ class Application:
     validFeeds = self.feedFilter.filterFeeds(nodes)
     filtered = listSub(nodes, validFeeds)
     self._writeToDB(validFeeds, filtered)
-    return (validFeeds, filtered)
+    self.results = (validFeeds, filtered)
 
   def _showResult(self, xs):
     print('\n{} feed(s) updated'.format(len(xs)))
@@ -88,12 +105,15 @@ class Application:
       print('Welcom to Charllote Rss Reader. ')
       self.readCommand([])
     else:
-      print('Now fetching resources')
-      results = self.fetchingRes()
-      self._showResult(results[0])
-      print('Instruction:\nc x:Open browser to check no x\nd x:Direct download specified feed with defualt dowloader\n')
-      self.readCommand(results)
+      self.fetchAndPrint()
+      self.readCommand(self.results)
         
+  def fetchAndPrint(self):
+    print('Now fetching resources')
+    self.fetchingRes()
+    self._showResult(self.results[0])
+    print('Instruction:\nc x:Open browser to check no x\nd x:Direct download specified feed with defualt dowloader\n')
+
 
 if __name__ == '__main__':
   import sys

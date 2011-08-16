@@ -10,17 +10,17 @@ import datetime
 import re
 import os
 
-from myutil import escapeHTMLtag
-from myutil import str2Time
-from myutil import time2Str
-from myutil import CacheIsEmptyError
+from pikaurdlib.util import decodeXML
+from pikaurdlib.util import str2Time
+from pikaurdlib.util import time2Str
+from pikaurdlib.util import CacheIsEmptyError
 
 dateFormat = '%Y-%m-%d %H:%M:%S'
 
 class FeedItem:
   def __init__(self, title, pubDate, link='', fromId=0):
     self.fromFeedId = fromId
-    self.title = escapeHTMLtag(title)
+    self.title = decodeXML(title)
     self.pubDate = time2Str(str2Time(pubDate))
     self.link = link
 

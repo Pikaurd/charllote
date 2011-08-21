@@ -51,7 +51,6 @@ class FeedReader:
     for i in itemsRaw:
       feedItem = self._generateFeedItemFromNode(i)
       #print('data: {!s}\tdate:{}'.format(feedItem, FeedResUpdateTime.get(self.feedRes.id)))
-
       if isFetchExist or self._isFeedNew(feedItem):#feedIsNew:
         items.append(feedItem)
     return items
@@ -76,7 +75,7 @@ class FeedReader:
 
   def _fillFeedResPubDate(self):
     newPubDate = str2Time(self._getPubDate())
-    #print('old: {}\tnew: {}'.format(self.feedRes.pubDate, newPubDate))
+#    print('FeedId: {}\told: {}\tnew: {}'.format(self.feedRes.url, self.feedRes.pubDate, newPubDate))
     if self.feedRes.isUpdated(newPubDate):
       self.feedRes.pubDate = newPubDate
       ResourceOperator().addFeedResUpdateTime(self.feedRes)
@@ -176,6 +175,7 @@ class ResourceOperator:
     return [ FeedItem(r[2], r[4], r[3], r[1]) for r in rs ]
 
   def fillCache(self):
+    self.getFeedResUpdateTime()
     for e in self.getFeeds(100):
       Cache.update(e)
     

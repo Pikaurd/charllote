@@ -57,6 +57,7 @@ class Application:
         elif cmd == 'show':
           self._showResult(results[0])
         elif cmd == 'fetch':
+          ResourceOperator().fillCache()
           self.fetchAndPrint()
         else:
           print('unregconezed')

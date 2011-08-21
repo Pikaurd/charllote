@@ -38,8 +38,8 @@ class FeedItem:
   def isUpdated(self, oldTime):
     return oldTime < str2Time(self.pubDate, dateFormat)
 
-  def isNew(self):
-    return Cache.isNotExist(self)
+#  def isNew(self):
+#    return Cache.isNotExist(self)
 
 class Tags:
   def __init__(self, title, id=0):

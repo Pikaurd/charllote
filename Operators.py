@@ -29,6 +29,7 @@ from pikaurdlib.util import CacheIsEmptyError
 from pikaurdlib.util import EmptyObject
 
 class FeedReader:
+  noDuplicate = False
   def __init__(self, feedRes):
     self.isSkip = True
     self.feedParser = FeedParser()
@@ -43,15 +44,15 @@ class FeedReader:
     if self.feedParser.isAvailable():
       self._fillFeedResPubDate()
     
-  def getFeedItems(self, isFetchExist=True):
+  def getFeedItems(self, allowDuplicate=True):
     items = []
-    if self.isSkip and not isFetchExist:
+    if self.isSkip:
       return items
     itemsRaw = self.feedParser.findall('.//item')
     for i in itemsRaw:
       feedItem = self._generateFeedItemFromNode(i)
       #print('data: {!s}\tdate:{}'.format(feedItem, FeedResUpdateTime.get(self.feedRes.id)))
-      if isFetchExist or self._isFeedNew(feedItem):#feedIsNew:
+      if allowDuplicate or self._isFeedNew(feedItem):#feedIsNew:
         items.append(feedItem)
     return items
 
@@ -63,26 +64,29 @@ class FeedReader:
     
   def _isFeedNew(self, feedItem):
     try:
-      feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) and not Cache.isExist(feedItem)
+        feedIsNew = not Cache.isExist(feedItem) and feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) 
     except CacheIsEmptyError:
       ResourceOperator().fillCache()
     finally:
       if Cache.isEmpty():
         feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id))
       else:
-        feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) and not Cache.isExist(feedItem)
+        feedIsNew = not Cache.isExist(feedItem) and feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) 
     return feedIsNew
 
   def _fillFeedResPubDate(self):
-    newPubDate = str2Time(self._getPubDate())
+    try:
+      newPubDate = str2Time(self._getResPubDate())
 #    print('FeedId: {}\told: {}\tnew: {}'.format(self.feedRes.url, self.feedRes.pubDate, newPubDate))
-    if self.feedRes.isUpdated(newPubDate):
-      self.feedRes.pubDate = newPubDate
-      ResourceOperator().addFeedResUpdateTime(self.feedRes)
-      self.isSkip = False
-    #  print('skip feed: {}'.format(self.feedRes.url))
+      if self.feedRes.isUpdated(newPubDate):
+        self.feedRes.pubDate = newPubDate
+        ResourceOperator().addFeedResUpdateTime(self.feedRes)
+        self.isSkip = False
+      #  print('skip feed: {}'.format(self.feedRes.url))
+    except:
+      print("Error occured")
 
-  def _getPubDate(self):
+  def _getResPubDate(self):
     pubDateNode = self.feedParser.find('.//lastBuildDate')
     if pubDateNode == None:
       pubDateNode = self.feedParser.find('.//pubDate')

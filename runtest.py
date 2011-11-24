@@ -45,10 +45,11 @@ class TestFeedReader(unittest.TestCase):
     self.assertEqual(expect[1], items[1].link)
 
   def test_FeedItems2(self):
-    items = self.feedReader.getFeedItems(False)
+    items = self.feedReader.getFeedItems(FeedReader.noDuplicate)
+    #items = self.feedReader.getFeedItems()
     expect = ['http://www.178.com/mh/usagidrop/14596.shtml?from=rssReader',
               'http://www.178.com/mh/usagidrop/14445.shtml?from=rssReader']
-    #print(listPrint(items))
+    print('print ' + listPrint(items))
     self.assertEqual(expect[0], items[0].link)
     self.assertEqual(expect[1], items[1].link)
 

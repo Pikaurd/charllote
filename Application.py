@@ -36,8 +36,13 @@ class Application:
       openCmd = 'xdg-open'
     elif platform == 'win32':
       openCmd = 'start'
-    for i in [int(e) for e in index.split(' ')]:
-      os.system('open {!r}'.format(self.results[0][i].link))
+    try:
+      for i in [int(e) for e in index.split(' ')]:
+        os.system('open {!r}'.format(self.results[0][i].link))
+    except IndexError:
+      print("Index Error")
+    except ValueError:
+      print("Value Error")
 
 
   def readCommand(self, results):
@@ -77,10 +82,12 @@ class Application:
       print('cancled')
 
   def fetchingRes(self):
+#TODO: tmep solution
+#    try:
     nodes = []
     for feedRes in self.resOper.getFeedResource():
       reader = FeedReader(feedRes)
-      newNodes = reader.getFeedItems(isFetchExist=False)
+      newNodes = reader.getFeedItems(FeedReader.noDuplicate)
       if len(newNodes) == 0:
         print('[Info] skip feeds {}'.format(feedRes.id), end='\t')
         continue
@@ -90,6 +97,8 @@ class Application:
     filtered = listSub(nodes, validFeeds)
     self._writeToDB(validFeeds, filtered)
     self.results = (validFeeds, filtered)
+#    except:
+#      print("Fetching error")
 
   def _showResult(self, xs):
     print('\n{} feed(s) updated'.format(len(xs)))

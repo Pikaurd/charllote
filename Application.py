@@ -37,8 +37,11 @@ class Application:
     elif platform == 'win32':
       openCmd = 'start'
     try:
-      for i in [int(e) for e in index.split(' ')]:
-        os.system('open {!r}'.format(self.results[0][i].link))
+      for i in [int(e) for e in index.strip().split(' ')]:
+        if self.results[0][i].link.startswith('http'):
+          os.system('{} {!r}'.format(openCmd, self.results[0][i].link))
+        else:
+          print(self.results[0][i].link)
     except IndexError:
       print("Index Error")
     except ValueError:

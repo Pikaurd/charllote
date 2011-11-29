@@ -129,7 +129,7 @@ class TestResourceOperator(unittest.TestCase):
     real = self.resOper.getFeedResource()
 #    print(listPrint(real))
     self.assertEqual(2, real[1].id)
-    self.assertEqual(5, len(real))
+    self.assertEqual(7, len(real))
 
   @unittest.skip("insert skipping")
   def test_addAndGetFeedResUpdateTime(self):

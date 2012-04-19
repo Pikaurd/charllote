@@ -9,6 +9,7 @@
 import datetime
 import os
 import re
+import urllib
 
 from db import DBOperationOfSqlite3 as DBOper
 
@@ -29,30 +30,35 @@ from pikaurdlib.util import CacheIsEmptyError
 from pikaurdlib.util import EmptyObject
 
 class FeedReader:
+  noDuplicate = False
   def __init__(self, feedRes):
     self.isSkip = True
     self.feedParser = FeedParser()
     self.feedRes = feedRes
     self.initFeedParser(feedRes.url)
+    #self.feedResUpdateTime = None
 
   def initFeedParser(self, url):
-    if url.startswith('http'):
-      self.feedParser.parse(url=url)
-    else:
-      self.feedParser.parse(file=url)
-    if self.feedParser.isAvailable():
-      self._fillFeedResPubDate()
+    try:
+      if url.startswith('http'):
+        self.feedParser.parse(url=url)
+      else:
+        self.feedParser.parse(file=url)
+      if self.feedParser.isAvailable():
+        self._fillFeedResPubDate() # fill feed resource pubdate
+    except urllib.error.URLError:
+      self.isSkip = True
+      print("Can't connect to {}".format(url))
     
-  def getFeedItems(self, isFetchExist=True):
+  def getFeedItems(self, allowDuplicate=True):
     items = []
-    if self.isSkip and not isFetchExist:
+    if self.isSkip:
       return items
     itemsRaw = self.feedParser.findall('.//item')
     for i in itemsRaw:
       feedItem = self._generateFeedItemFromNode(i)
       #print('data: {!s}\tdate:{}'.format(feedItem, FeedResUpdateTime.get(self.feedRes.id)))
-
-      if isFetchExist or self._isFeedNew(feedItem):#feedIsNew:
+      if allowDuplicate or self._isFeedNew(feedItem):#feedIsNew:
         items.append(feedItem)
     return items
 
@@ -60,30 +66,34 @@ class FeedReader:
     title = self._getTextIfNotNone(node.find('title'))
     link = self._getTextIfNotNone(node.find('link'))
     pubDate = self._getTextIfNotNone(node.find('pubDate'))
-    return FeedItem(title, pubDate, link, self.feedRes.id)
+    desc = self._getTextIfNotNone(node.find('description'))
+    return FeedItem(title, pubDate, link, desc, self.feedRes.id)
     
   def _isFeedNew(self, feedItem):
-    try:
-      feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) and not Cache.isExist(feedItem)
-    except CacheIsEmptyError:
-      ResourceOperator().fillCache()
-    finally:
-      if Cache.isEmpty():
-        feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id))
-      else:
-        feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) and not Cache.isExist(feedItem)
-    return feedIsNew
+    feedResUpdateTime = FeedResUpdateTime.get(self.feedRes.id) 
+    isFeedUpdated = feedItem.isUpdated(feedResUpdateTime)
+    notInCache = True
+    if not Cache.isEmpty():
+      notInCache = not Cache.isExist(feedItem)
+
+    return isFeedUpdated and notInCache
 
   def _fillFeedResPubDate(self):
-    newPubDate = str2Time(self._getPubDate())
-    #print('old: {}\tnew: {}'.format(self.feedRes.pubDate, newPubDate))
-    if self.feedRes.isUpdated(newPubDate):
-      self.feedRes.pubDate = newPubDate
-      ResourceOperator().addFeedResUpdateTime(self.feedRes)
-      self.isSkip = False
-    #  print('skip feed: {}'.format(self.feedRes.url))
+    try:
+      newPubDate = str2Time(self._getResPubDate())
+#      print('FeedURL: {}\told: {}\tnew: {}'.format(
+#                                                    self.feedRes.url
+#                                                  , self.feedRes.pubDate
+#                                                  , newPubDate))
+      if self.feedRes.isUpdated(newPubDate):
+        self.feedRes.pubDate = newPubDate
+        ResourceOperator().addFeedResUpdateTime(self.feedRes)
+        self.isSkip = False
+      #  print('skip feed: {}'.format(self.feedRes.url))
+    except e:
+      print("Error occured",e)
 
-  def _getPubDate(self):
+  def _getResPubDate(self):
     pubDateNode = self.feedParser.find('.//lastBuildDate')
     if pubDateNode == None:
       pubDateNode = self.feedParser.find('.//pubDate')
@@ -176,6 +186,7 @@ class ResourceOperator:
     return [ FeedItem(r[2], r[4], r[3], r[1]) for r in rs ]
 
   def fillCache(self):
+    self.getFeedResUpdateTime()
     for e in self.getFeeds(100):
       Cache.update(e)
     

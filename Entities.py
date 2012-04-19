@@ -18,11 +18,12 @@ from pikaurdlib.util import CacheIsEmptyError
 dateFormat = '%Y-%m-%d %H:%M:%S'
 
 class FeedItem:
-  def __init__(self, title, pubDate, link='', fromId=0):
+  def __init__(self, title, pubDate, link='', description='', fromId=0):
     self.fromFeedId = fromId
-    self.title = decodeXML(title)
+    self.title = decodeXML(title.strip())
     self.pubDate = time2Str(str2Time(pubDate))
     self.link = link
+    self.description = description
 
   def insertStmt(self):
     sql = 'insert into feeds (from_feed_id, title, link, time) values({!r},{!r},{!r},{!r})'
@@ -48,6 +49,7 @@ class Tags:
     
 class FeedResUpdateTime:
   cache = {}
+  DATE = datetime.datetime(2011, 1, 1, 12, 0, 0)
   def __init__(self, feedId, updateTime):
     FeedResUpdateTime.cache[feedId] = str2Time(updateTime, dateFormat)
 
@@ -55,7 +57,7 @@ class FeedResUpdateTime:
   def get(feedId):
     updateTime = FeedResUpdateTime.cache.get(feedId)
     if updateTime == None:
-      updateTime = datetime.datetime(2011, 1, 1, 12, 0, 0)
+      updateTime = FeedResUpdateTime.DATE
 #      updateTime = '2011-01-01 12:00:00'
     return updateTime
 
@@ -124,6 +126,7 @@ class TestFeedResUpdateTime(unittest.TestCase):
 
   def test_get(self):
     self.assertEqual(datetime.datetime(2011,1,1,12,1,1), FeedResUpdateTime.get(0))
+    self.assertEqual(datetime.datetime(2011, 1, 1, 12, 0, 0), FeedResUpdateTime.get(1))
 
 class TestCache(unittest.TestCase):
   def test_updateCache(self):

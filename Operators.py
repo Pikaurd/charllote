@@ -9,6 +9,7 @@
 import datetime
 import os
 import re
+import urllib
 
 from db import DBOperationOfSqlite3 as DBOper
 
@@ -35,14 +36,19 @@ class FeedReader:
     self.feedParser = FeedParser()
     self.feedRes = feedRes
     self.initFeedParser(feedRes.url)
+    #self.feedResUpdateTime = None
 
   def initFeedParser(self, url):
-    if url.startswith('http'):
-      self.feedParser.parse(url=url)
-    else:
-      self.feedParser.parse(file=url)
-    if self.feedParser.isAvailable():
-      self._fillFeedResPubDate()
+    try:
+      if url.startswith('http'):
+        self.feedParser.parse(url=url)
+      else:
+        self.feedParser.parse(file=url)
+      if self.feedParser.isAvailable():
+        self._fillFeedResPubDate() # fill feed resource pubdate
+    except urllib.error.URLError:
+      self.isSkip = True
+      print("Can't connect to {}".format(url))
     
   def getFeedItems(self, allowDuplicate=True):
     items = []
@@ -60,31 +66,32 @@ class FeedReader:
     title = self._getTextIfNotNone(node.find('title'))
     link = self._getTextIfNotNone(node.find('link'))
     pubDate = self._getTextIfNotNone(node.find('pubDate'))
-    return FeedItem(title, pubDate, link, self.feedRes.id)
+    desc = self._getTextIfNotNone(node.find('description'))
+    return FeedItem(title, pubDate, link, desc, self.feedRes.id)
     
   def _isFeedNew(self, feedItem):
-    try:
-        feedIsNew = not Cache.isExist(feedItem) and feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) 
-    except CacheIsEmptyError:
-      ResourceOperator().fillCache()
-    finally:
-      if Cache.isEmpty():
-        feedIsNew = feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id))
-      else:
-        feedIsNew = not Cache.isExist(feedItem) and feedItem.isUpdated(FeedResUpdateTime.get(self.feedRes.id)) 
-    return feedIsNew
+    feedResUpdateTime = FeedResUpdateTime.get(self.feedRes.id) 
+    isFeedUpdated = feedItem.isUpdated(feedResUpdateTime)
+    notInCache = True
+    if not Cache.isEmpty():
+      notInCache = not Cache.isExist(feedItem)
+
+    return isFeedUpdated and notInCache
 
   def _fillFeedResPubDate(self):
     try:
       newPubDate = str2Time(self._getResPubDate())
-#    print('FeedId: {}\told: {}\tnew: {}'.format(self.feedRes.url, self.feedRes.pubDate, newPubDate))
+#      print('FeedURL: {}\told: {}\tnew: {}'.format(
+#                                                    self.feedRes.url
+#                                                  , self.feedRes.pubDate
+#                                                  , newPubDate))
       if self.feedRes.isUpdated(newPubDate):
         self.feedRes.pubDate = newPubDate
         ResourceOperator().addFeedResUpdateTime(self.feedRes)
         self.isSkip = False
       #  print('skip feed: {}'.format(self.feedRes.url))
-    except:
-      print("Error occured")
+    except e:
+      print("Error occured",e)
 
   def _getResPubDate(self):
     pubDateNode = self.feedParser.find('.//lastBuildDate')

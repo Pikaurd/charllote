@@ -47,6 +47,9 @@ class Application:
     except ValueError:
       print("Value Error")
 
+  def showDescription(self, index):
+    i = int(index)
+    print(self.results[0][i].description)
 
   def readCommand(self, results):
     def getArg(x):
@@ -57,7 +60,8 @@ class Application:
         if cmd.startswith('c'):
           self.openLink(cmd[2:])
         elif cmd.startswith('d'):
-          print('Not implement')
+          print('Feed Description:')
+          self.showDescription(cmd[2:])
         elif cmd == 'add filter':
           self.addNewFilter()
         elif cmd == 'filtered':
@@ -95,7 +99,7 @@ class Application:
         print('[Info] skip feeds {}'.format(feedRes.id), end='\t')
         continue
       nodes += newNodes
-    nodes = listUnique(nodes, lambda x:x.title)
+    #nodes = listUnique(nodes, lambda x:x.title)
     validFeeds = self.feedFilter.filterFeeds(nodes)
     filtered = listSub(nodes, validFeeds)
     self._writeToDB(validFeeds, filtered)

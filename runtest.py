@@ -136,15 +136,15 @@ class TestResourceOperator(unittest.TestCase):
     feedRes = self.reader.feedRes
     self.resOper.addFeedResUpdateTime(feedRes)
     self.resOper.getFeedResUpdateTime()# add data in FeedReaUpdateTime.Cache
-    self.assertEqual(feedRes.pubDate, FeedResUpdateTime.get(feedRes.id))
+    self.assertLessEqual(feedRes.pubDate, FeedResUpdateTime.get(feedRes.id))
 
   def test_getFeeds(self):
     feeds = self.resOper.getFeeds()
-    self.assertLess(0, len(feeds))
+    self.assertLessEqual(0, len(feeds))
 
   def test_fillCache(self):
     self.resOper.fillCache()
-    self.assertLess(0, Cache.size())
+    self.assertLessEqual(0, Cache.size())
 
 
 if __name__ == '__main__':

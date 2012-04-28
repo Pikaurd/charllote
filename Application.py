@@ -12,9 +12,11 @@ import sys
 from pikaurdlib.util import listSub
 from pikaurdlib.util import listPrint
 from pikaurdlib.util import listUnique
+
 from Operators import ResourceOperator
 from Operators import FeedFilter
 from Operators import FeedReader
+from GetMagnetLink import getMagnetLinkFromURL
 
 
 class Application:
@@ -47,6 +49,10 @@ class Application:
     except ValueError:
       print("Value Error")
 
+  def magnetLink(self, index):
+    for i in [int(e) for e in index.strip().split(' ')]:
+      print(getMagnetLinkFromURL(self.results[0][i].link))
+
   def showDescription(self, index):
     i = int(index)
     print(self.results[0][i].description)
@@ -57,24 +63,27 @@ class Application:
     try:
       cmd = input()
       while (cmd != 'exit'):
-        if cmd.startswith('c'):
+        if cmd.startswith('c'): # open url
           self.openLink(cmd[2:])
-        elif cmd.startswith('d'):
+        elif cmd.startswith('d'): # show description
           print('Feed Description:')
           self.showDescription(cmd[2:])
-        elif cmd == 'add filter':
+        elif cmd.startswith('m'): # get magnet link
+          self.magnetLink(cmd[2:])
+        elif cmd == 'add filter': # add fileter
           self.addNewFilter()
-        elif cmd == 'filtered':
+        elif cmd == 'filtered':  # list fileterd feeds
           self._showResult(results[1])
-        elif cmd == 'show':
+        elif cmd == 'show': # show feeds
           self._showResult(results[0])
-        elif cmd == 'fetch':
+        elif cmd == 'fetch': # fetch from feedRes
           self.fetchAndPrint()
         else:
-          print('unregconezed')
+          print('unrecognized')
         cmd = input()
     except EOFError:
       print('Bye~')
+
 
   def addNewFilter(self):
     print('Input reason tag.{tag 1 and 4 is must filter}')

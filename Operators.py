@@ -125,6 +125,7 @@ class FeedFilter:
     firstFilter = [ e for e in feeds if _isContainFilterReason(e.title) ]
     result = [e for e in firstFilter if self._isValid(e)]
     filteredFeeds = listSub(feeds, firstFilter) + result
+    filteredFeeds = listUnique(filteredFeeds)
     return filteredFeeds
 
   def _isValid(self, feed):

@@ -14,11 +14,10 @@ def getMagnetLink(content):
   return decodeXML(magnetLink[0])
 
 def getMagnetLinkFromURL(url):
+  if url.startswith('magnet'):
+    return url
   content = toUTF8(getContentByURL(url))
-  pattern = r'magnet:\?[0-9a-zA-Z=:&;./]+'
-  magnetLink = re.findall(pattern, content)
-  assert(len(magnetLink) == 1)
-  return decodeXML(magnetLink[0])
+  return getMagnetLink(content)
 
 
 ##############################

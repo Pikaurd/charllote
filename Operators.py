@@ -162,6 +162,8 @@ class ResourceOperator:
     sql = 'insert into {} (from_feed_id, title, link, time) values ({!r},{!r},{!r},{!r})'
     for feed in feeds:
       self.db.executeDML(sql.format(table, feed.fromFeedId, feed.title, feed.link, feed.pubDate))
+      Cache.update(feed) #update cache when fetched new feed
+      #TODO create a notify to make cache update
 
   def getFilterPattern(self):
     rs = self.db.select(queryStmt('from reason_of_filtered'))

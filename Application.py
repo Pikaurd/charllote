@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/local/bin/python3
 # -*- coding: UTF-8 -*-
 
 ###
@@ -136,6 +136,9 @@ class Application:
   def fetchAndPrint(self):
     print('Now fetching resources')
     self.fetchingRes()
+    if self.results == None:
+      print("Fetch Error")
+      return
     self._showResult(self.results[0])
     print('Instruction:\nc x:Open browser to check no x\nd x:Direct download specified feed with defualt dowloader\n')
 

@@ -17,7 +17,7 @@ from Operators import ResourceOperator
 from Operators import FeedFilter
 from Operators import FeedReader
 from GetMagnetLink import getMagnetLinkFromURL
-
+from sendlink import SendLink4Transmission as send2Trans
 
 class Application:
   __version__ = (0, 1, 3)
@@ -26,6 +26,7 @@ class Application:
     self.feedFilter = FeedFilter()
     self._initCache()
     self.results = None
+    self.linkSender = None
 
   def _initCache(self):
     self.resOper.getFeedResUpdateTime()
@@ -53,6 +54,13 @@ class Application:
     for i in [int(e) for e in index.strip().split(' ')]:
       print(getMagnetLinkFromURL(self.results[0][i].link))
 
+  def sendMagnetLink(self, index):
+    if self.linkSender is None:
+      self.linkSender = send2Trans()
+    for i in [int(e) for e in index.strip().split(' ')]:
+      link = getMagnetLinkFromURL(self.results[0][i].link)
+      self.linkSender.sendlink(link)
+
   def showDescription(self, index):
     i = int(index)
     print(self.results[0][i].description)
@@ -70,6 +78,8 @@ class Application:
           self.showDescription(cmd[2:])
         elif cmd.startswith('m'): # get magnet link
           self.magnetLink(cmd[2:])
+        elif cmd.startswith('s'): # send magnet link
+          self.sendMagnetLink(cmd[2:])
         elif cmd == 'add filter': # add fileter
           self.addNewFilter()
         elif cmd == 'filtered':  # list fileterd feeds
